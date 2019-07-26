@@ -1,0 +1,22 @@
+{
+  "domain": "http://SUBDOMAIN/",
+  "app": "photomosaic.php",
+  "cache": false,
+  "tileWidth": 256,
+  "tileHeight": 256,
+  "motifWidth": 115,
+  "motifHeight": 86,
+  "blockimgPath": "swfData\/web\/",
+  "arrZoomSize": [0, 4, 8, 16, 32, 64, 128, 256],
+  "arrZoomSize2": [0, 4, 8, 16, 32, 64, 128, 256],
+  "initialZoomSizeArr":{"pc":1,"iphone":1,"androidphone":1,"ipad":1,"androidtablet":1},
+  "zoomImagePath": "swfData\/blockimg\/",
+  "searchApi": "api\/search.php",
+  "bgImageApi": "api\/makeBgImage.php",
+  "indiTwitterText":"",
+  "campTwitterText":"",
+  "faceRekognition":false,
+  "pitcomSnap":true,
+  "pitcomSnapVersion":4,
+  "snsLinkage":false
+}
