@@ -185,7 +185,7 @@
 	    window.open('https://twitter.com/intent/tweet?text='+encodeURIComponent(""));
 	}
 	</script>
-	<script type="text/javascript" src="app/johoo.coffee"></script>
+	<script type="text/javascript" src="app/johoo.js"></script>
 
 </body>
 </html>
