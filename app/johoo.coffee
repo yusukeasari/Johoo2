@@ -54,6 +54,7 @@ class PhotomosaicViewer extends Backbone.View
 
   initialize:=>
     #環境設定とか
+    jQuery.support.cors = true;
     @uniBrowse = new Browser
 
     minZoom = initialZoomSizeArr[Browser.device]
@@ -340,6 +341,7 @@ class CI extends Backbone.View
   initialize:=>
   convertImage:(_src,_callback,_option)=>
     _option.canvas = true
+    _option.crossOrigin = 'use-credentials'
 
     loadImage.parseMetaData _src, (data)=>
       if data.exif
@@ -423,7 +425,8 @@ class QuickSearchPanel extends Backbone.View
     $(@fileform).val('')
 
   displayOriginal:(_img)=>
-    img = $('<img>').attr('src',_img.toDataURL('image/jpeg'))
+    img = $('<img>').attr('crossOrigin','use-credentials')
+      .attr('src',_img.toDataURL('image/jpeg'))
       .attr('class','searchTargetImage')
       .attr('width','45')
       .attr('height','45')
@@ -509,7 +512,8 @@ class QuickSearchPanel extends Backbone.View
         a.score < b.score
       )
       _list.map (_img)=>
-        img = $('<img>').attr('src',_img.data.toDataURL('image/jpeg'))
+        img = $('<img>').attr('crossOrigin','use-credentials')
+          .attr('src',_img.data.toDataURL('image/jpeg'))
           .attr('class','searchResultItemImage')
         #<i id="searchResultTropgy'+i+'" class="fas fa-trophy"></i>
         textarea = $('<div >').attr('class','searchResultItemText').html('')
@@ -569,7 +573,7 @@ class QuickSearchPanel extends Backbone.View
 
   displayTextSearchResult:(_data)=>
     list = []
-    imgs = new ImageLoader _data[0],{crop:true,maxHeight:55,maxWidth:55}
+    imgs = new ImageLoader _data[0],{crop:true,maxHeight:55,maxWidth:55,crossOrigin:"use-credentials"}
 
     @i=1
     @loadMore=false
@@ -684,6 +688,7 @@ class ImageLoader extends Backbone.View
 
   loadItem:(_target)=>
     @options.canvas = true
+    @options.crossOrigin = 'use-credentials'
 
     loadImage.parseMetaData _target.img, (_data)=>
       if _data.exif
