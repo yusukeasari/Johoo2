@@ -93,6 +93,7 @@
 
     PhotomosaicViewer.prototype.initialize = function() {
       var css_href;
+      jQuery.support.cors = true;
       this.uniBrowse = new Browser;
       minZoom = initialZoomSizeArr[Browser.device];
       nowZoom = minZoom;
@@ -101,7 +102,7 @@
       return $("<link/>", {
         rel: "stylesheet",
         type: "text/css",
-        href: 'css/menu.css'
+        href: 'css/menu.css' + '?' + Utility.getRandom()
       }).appendTo($('head')).promise().then((function(_this) {
         return function() {
           return $("<link/>", {
@@ -454,6 +455,7 @@
 
     CI.prototype.convertImage = function(_src, _callback, _option) {
       _option.canvas = true;
+      _option.crossOrigin = 'use-credentials';
       return loadImage.parseMetaData(_src, (function(_this) {
         return function(data) {
           if (data.exif) {
@@ -547,6 +549,8 @@
 
     QuickSearchPanel.prototype.loadMore = false;
 
+    QuickSearchPanel.prototype.loadPrev = false;
+
     QuickSearchPanel.prototype.initialize = function() {
       $(this.cancelbutton).hide();
       $(this.menuopenbutton).on('change', (function(_this) {
@@ -574,12 +578,12 @@
       $(this.textform).on('keydown keyup', this.textChanged);
       this.enableSearchButton();
       if (faceRekognition) {
-        console.log('SHOW!!!');
         $(this.fileform).on('change', this.getImageData);
       } else {
         console.log('HIDE!!!');
         $('#image').css('cssText', 'display: block !important');
         $('#image').hide();
+        $('.file-form-button').remove();
       }
       $('#QuickSearch').prepend($('<div >').attr('class', 'searchTargetItemLoading'));
       $('.searchTargetItemLoading').animate({
@@ -609,7 +613,7 @@
 
     QuickSearchPanel.prototype.displayOriginal = function(_img) {
       var closebutton, img, textarea, wrapper;
-      img = $('<img>').attr('src', _img.toDataURL('image/jpeg')).attr('class', 'searchTargetImage').attr('width', '45').attr('height', '45');
+      img = $('<img>').attr('crossOrigin', 'use-credentials').attr('src', _img.toDataURL('image/jpeg')).attr('class', 'searchTargetImage').attr('width', '45').attr('height', '45');
       textarea = $('<div >').attr('class', 'searchTargetItemText');
       closebutton = wrapper = $('<div >').attr('class', 'searchTargetItem').animate({
         opacity: 0,
@@ -713,6 +717,11 @@
                 opacity: 0,
                 marginBottom: "+=50px"
               }, 300, 'easeOutQuart');
+            } else if (target.match(new RegExp('searchPrevMore'))) {
+              return $(_div).delay(n * 20).animate({
+                opacity: 0,
+                marginBottom: "+=50px"
+              }, 300, 'easeOutQuart');
             } else if (target.match(new RegExp('searchResultItem1'))) {
               return $(_div).delay(n * 20).animate({
                 opacity: 0,
@@ -745,7 +754,7 @@
           });
           _list.map(function(_img) {
             var h, img, textarea, wrapper;
-            img = $('<img>').attr('src', _img.data.toDataURL('image/jpeg')).attr('class', 'searchResultItemImage');
+            img = $('<img>').attr('crossOrigin', 'use-credentials').attr('src', _img.data.toDataURL('image/jpeg')).attr('class', 'searchResultItemImage');
             textarea = $('<div >').attr('class', 'searchResultItemText').html('');
             wrapper = $('<div >').attr('id', 'searchResultItem' + i).attr('class', 'searchResultItem').animate({
               opacity: 0,
@@ -806,7 +815,16 @@
         dataType: "json"
       }).done((function(_this) {
         return function(data) {
-          return _this.displayTextSearchResult(data);
+          if (data[1][0].ERROR === 'TOOMUCHRESULT') {
+            _this.enableSearchButton();
+            alert('300件以上ヒットしました。詳しく入力してください。');
+          }
+          if (data[1][0].ERROR === 'NOTFOUND') {
+            _this.enableSearchButton();
+            return alert('入力された情報でヒットしませんでした。');
+          } else {
+            return _this.displayTextSearchResult(data);
+          }
         };
       })(this)).fail((function(_this) {
         return function(data) {
@@ -817,15 +835,16 @@
 
     QuickSearchPanel.prototype.displayTextSearchResult = function(_data) {
       var imgs, list;
-      console.log('displayTextSearchResult');
       list = [];
       imgs = new ImageLoader(_data[0], {
         crop: true,
         maxHeight: 55,
-        maxWidth: 55
+        maxWidth: 55,
+        crossOrigin: "use-credentials"
       });
       this.i = 1;
       this.loadMore = false;
+      this.loadPrev = false;
       return imgs.loadStart().done((function(_this) {
         return function(_list) {
           var textarea, wrapper;
@@ -833,12 +852,20 @@
           if (_data[1][1].TOTAL > _this.max && _data[1][0].ERROR !== 'TOOMUCHRESULT') {
             _this.loadMore = true;
           }
+          if (_data[1][2].PAGE > 1) {
+            _this.loadPrev = true;
+          }
           _list.map(function(_img) {
             var h, img, l, m, textarea, wrapper;
             if (_this.i <= _this.max) {
               img = $('<img>').attr('src', _img.data.toDataURL('image/jpeg')).attr('class', 'searchResultItemImage');
-              textarea = $('<div >').attr('class', 'searchResultItemText').html(_img.b1);
-              l = _this.loadMore ? 33 : 0;
+              textarea = $('<div >').attr('class', 'searchResultItemText');
+              textarea.css({
+                width: '120px',
+                wordBreak: 'break-all'
+              });
+              textarea.html(_img.b4);
+              l = (_this.loadMore != null) || (_this.loadPrev != null) ? 33 : 0;
               m = _list.length < _this.max ? _list.length : _this.max;
               wrapper = $('<div >').attr('id', 'searchResultItem' + _this.i).attr('class', 'searchResultItem').animate({
                 opacity: 0,
@@ -863,7 +890,7 @@
           });
           if (_this.loadMore) {
             textarea = $('<div >').attr('class', 'loadMoreText');
-            textarea.text('続きを見る');
+            textarea.text('続き >>');
             wrapper = $('<div >').attr('id', 'searchLoadMore').css({
               marginTop: '0px'
             }).animate({
@@ -882,6 +909,27 @@
               marginLeft: "0px"
             }, 300, 'easeOutQuart');
           }
+          if (_data[1][2].PAGE > 1) {
+            textarea = $('<div >').attr('class', 'loadPrevText');
+            textarea.text('<< 戻る');
+            wrapper = $('<div >').attr('id', 'searchPrevMore').css({
+              marginTop: '0px'
+            }).animate({
+              opacity: 0,
+              marginLeft: "+=50px"
+            }, 0);
+            wrapper.append(textarea);
+            $(_this.resultel).prepend(wrapper);
+            console.log('more', _data[1]);
+            $('#searchPrevMore').on('click', function() {
+              console.log('more', _data[1]);
+              return _this.startSearch(_data[1][2].PAGE - 1);
+            });
+            $('#searchPrevMore').delay(_this.i * 80).animate({
+              opacity: 1,
+              marginLeft: "0px"
+            }, 300, 'easeOutQuart');
+          }
           return _this.setResultElPos(_this.i);
         };
       })(this));
@@ -890,7 +938,7 @@
     QuickSearchPanel.prototype.setResultElPos = function(i) {
       var l;
       i--;
-      l = this.loadMore ? 33 : 0;
+      l = (this.loadMore != null) || (this.loadPrev != null) ? 33 : 0;
       console.log('loadmore:' + this.loadMore + l);
       $(this.resultel).css({
         'height': 73 * i + 'px',
@@ -972,6 +1020,7 @@
 
     ImageLoader.prototype.loadItem = function(_target) {
       this.options.canvas = true;
+      this.options.crossOrigin = 'use-credentials';
       return loadImage.parseMetaData(_target.img, (function(_this) {
         return function(_data) {
           if (_data.exif) {
@@ -3917,7 +3966,6 @@
     indiTwitterText = data.indiTwitterText;
     campTwitterText = data.campTwitterText;
     faceRekognition = data.faceRekognition;
-    console.log(faceRekognition);
     snsLinkage = data.snsLinkage;
     i = 0;
     for (j = 0, len = arrZoomSizeX.length; j < len; j++) {
