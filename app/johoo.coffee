@@ -346,7 +346,6 @@ class CI extends Backbone.View
     loadImage.parseMetaData _src, (data)=>
       if data.exif
         _option.orientation = data.exif.get('Orientation')
-        console.log('Orientation: ' + _option.orientation)
       loadImage(_src,_callback,_option)
 
 ###*
@@ -380,18 +379,15 @@ class QuickSearchPanel extends Backbone.View
 
     $(@menuopenbutton).on 'change',=>
       if $(@menuopenbutton).is(':checked')
-        console.log 'CHECKED'
         $(@resultel).css
 #          'height':'200px'
       else
-        console.log 'UNCHECKED'
         @removeSearchResult()
         $(@resultel).css
           'height':'0px'
 
     $(@resultel).on 'change',=>
       if $(@).is(':checked')
-        console.log 'CHECKED'
     $(@cancelbutton).on 'click',@textCancel
     $(@textform).on 'keydown keyup',@textChanged
 
@@ -399,7 +395,6 @@ class QuickSearchPanel extends Backbone.View
     if faceRekognition
       $(@fileform).on 'change',@getImageData
     else
-      console.log 'HIDE!!!'
       $('#image').css('cssText','display: block !important')
       $('#image').hide()
       $('.file-form-button').remove()
@@ -535,7 +530,6 @@ class QuickSearchPanel extends Backbone.View
 #    @enableSearchButton()
 
   onClickSearchResult:(_data)=>
-    console.log _data.id
     @trigger 'onclicksearchresult',_data.num
 
   checkFileType:(file)=>
@@ -545,7 +539,6 @@ class QuickSearchPanel extends Backbone.View
       file
 
   startSearch:(e)=>
-    console.log 'starSearch',e
     @removeSearchResult()
     @disableSearchButton()
     $('.searchTargetItemLoading').animate({opacity:1},300,'easeOutQuart')
@@ -578,7 +571,6 @@ class QuickSearchPanel extends Backbone.View
     @loadMore=false
     @loadPrev=false
     imgs.loadStart().done (_list)=>
-      console.log '_list:'+_list.length+"/"+_data[1][0].ERROR
       if _data[1][1].TOTAL > @max and _data[1][0].ERROR isnt 'TOOMUCHRESULT'
         @loadMore=true
       if _data[1][2].PAGE > 1
@@ -616,9 +608,7 @@ class QuickSearchPanel extends Backbone.View
         wrapper = $('<div >').attr('id','searchLoadMore').css(marginTop:'0px').animate({opacity:0,marginLeft:"+=50px"},0)          
         wrapper.append textarea
         $(@resultel).prepend(wrapper)
-        console.log 'more',_data[1]
         $('#searchLoadMore').on('click',=>
-          console.log 'more',_data[1]
           @startSearch(_data[1][2].PAGE+1)
         )
         $('#searchLoadMore').delay(@i*80).animate({opacity:1,marginLeft:"0px"},300,'easeOutQuart')
@@ -628,9 +618,7 @@ class QuickSearchPanel extends Backbone.View
         wrapper = $('<div >').attr('id','searchPrevMore').css(marginTop:'0px').animate({opacity:0,marginLeft:"+=50px"},0)          
         wrapper.append textarea
         $(@resultel).prepend(wrapper)
-        console.log 'more',_data[1]
         $('#searchPrevMore').on('click',=>
-          console.log 'more',_data[1]
           @startSearch(_data[1][2].PAGE-1)
         )
         $('#searchPrevMore').delay(@i*80).animate({opacity:1,marginLeft:"0px"},300,'easeOutQuart')
@@ -639,7 +627,6 @@ class QuickSearchPanel extends Backbone.View
   setResultElPos:(i)=>
     i--
     l = if @loadMore? or @loadPrev? then 33 else 0
-    console.log 'loadmore:'+@loadMore+l
     $(@resultel).css
       'height':73*i+'px'
       'width':'225px'
@@ -1149,7 +1136,6 @@ class Pyramid extends Backbone.View
       typeof div.ontouchstart is 'function'
     if Browser.device is 'ipad' or Browser.device is 'iphone'
 #    if Browser.device isnt 'pc'
-      console.log 'dev1:'+Browser.device
       $(@el).on 'touchstart',@onMouseDown
       $(@el).on 'touchend',@onMouseUp
       $(@el).on 'touchmove',@onMouseMove
@@ -1159,7 +1145,6 @@ class Pyramid extends Backbone.View
       $(@el).on 'gestureend',@onGestureEnd
 
     else if Browser.device is 'androidphone' or Browser.device is 'androidtablet'
-      console.log 'dev2:'+Browser.device
       $(@el).on 'touchstart',@onAndMouseDown
       $(@el).on 'touchend',@onAndMouseUp
       $(@el).on 'touchmove',@onAndMouseMove
@@ -1167,7 +1152,6 @@ class Pyramid extends Backbone.View
 
 
     else
-      console.log 'dev3:'+Browser.device
       $(@el).on 'mousedown',@onMouseDown
       $(@el).on 'mouseup',@onMouseUp
       $(@el).on 'mousemove',@onMouseMove
@@ -1188,7 +1172,6 @@ class Pyramid extends Backbone.View
         'background-size':'contain'
       @update()
       @pyramidSetPositionToCenter()
-      console.log 'SET BGIMAGE'
 
     #初期画面を表示
   @show = ->
@@ -1278,7 +1261,6 @@ class Pyramid extends Backbone.View
 
     cords = Point.getPoint e
     if cords[0].length > 1
-      console.log 'single'
       Point.lock e
       @disSt = @distance(cords[0],cords[1])
       $(@el).css
@@ -1316,8 +1298,6 @@ class Pyramid extends Backbone.View
   onAndMouseUp:(e)=>
     Utility.eventcanceller e
     cords = Point.getPoint e
-    console.log cords[0].length
-    console.log @scale
     if Point.isLock() is false and @scale isnt -1
       $(@el).css
         left:@dragStartLeft
@@ -1347,9 +1327,6 @@ class Pyramid extends Backbone.View
         @update 'pinchZoom'
     else
       @onMouseUp(e)
-
-    console.log 'onAndMouseUp'
-    #console.log
 
   onAndMouseCancel:(e)=>
     console.log e
@@ -2174,7 +2151,6 @@ class BlockLayout extends Backbone.View
           scaleY:@blockLayout[bid].scale
         },0)
   changeLayout:(_move)=>
-    console.log 'changeLayout'
     for item in blockList
       bid = item.model.get("bid")
       num = item.model.get("num")
@@ -2332,7 +2308,6 @@ class ImageViewer extends Backbone.View
 
     @stage
   touchstart:(e)=>
-    console.log 'touchstart'
     @position = @getPosition(e)
     @direction =''
   touchmove:(e)=>
@@ -2385,13 +2360,11 @@ class ImageViewer extends Backbone.View
 
     @render()
     @imageList = []
-    console.log 'stat'
     setTimeout =>
       @buttonon()
       @animateComplete()
     ,200
   animateComplete:=>
-    console.log 'stat2'
     if(@vector == 'next')
       @next()
       @vector = ''
