@@ -550,7 +550,6 @@ class QuickSearchPanel extends Backbone.View
     @disableSearchButton()
     $('.searchTargetItemLoading').animate({opacity:1},300,'easeOutQuart')
     $(@searchbutton).animate({opacity:0},300,'easeOutQuart')
-    console.log e
     p = if isNaN(e) then 1 else e
     query = 'text='+$(@textform).val()+'&page='+p
     $.ajax(
@@ -587,7 +586,8 @@ class QuickSearchPanel extends Backbone.View
 
       _list.map (_img)=>
         if @i <= @max
-          img = $('<img>').attr('src',_img.data.toDataURL('image/jpeg'))
+          img = $('<img>').attr('crossOrigin','use-credentials')
+            .attr('src',_img.data.toDataURL('image/jpeg'))
             .attr('class','searchResultItemImage')
           textarea = $('<div >').attr('class','searchResultItemText')
           textarea.css(width: '120px',wordBreak: 'break-all')
@@ -680,7 +680,7 @@ class ImageLoader extends Backbone.View
     if @target.length > 0
       target = @target.pop()
       if !target.img.match(new RegExp('jpg'))
-        target.img = 'swfData/blockimg/'+target.img+'.jpg'
+        target.img = zoomImageDir+target.img+'.jpg'+cache
       else
       @loadItem target
     else
@@ -2085,6 +2085,7 @@ class BlockView extends Backbone.View
       .beginFill(@model.get("fill"))
       .drawRect(0,0,@model.get("width"),@model.get("height"))
     @image = new createjs.Bitmap(@model.get("image"))
+    @image.mouseEnabled = false;
 
     @base.x=@model.get("x")
     @base.y=@model.get("y")
@@ -2321,7 +2322,7 @@ class ImageViewer extends Backbone.View
 #            console.log 'touchend mouseup'+e.pageX
 
 
-    @loader = new createjs.LoadQueue()
+    @loader = new createjs.LoadQueue(false)
 #    @loader.setMaxConnections(1)
     @loader.on("error",@loadError)
     @loader.on("fileload",@loadFile)
@@ -2354,7 +2355,7 @@ class ImageViewer extends Backbone.View
     ret = []
     for item in _obj
       item.data = item
-      item.src = 'swfData/blockimg/'+item.data["img"]+'.jpg'
+      item.src = zoomImageDir+item.data["img"]+'.jpg'
 #      item.src = 'api/getBlockImage.php?blockimg='+item.data["img"]
       item.type = createjs.LoadQueue.IMAGE
       ret.push item
