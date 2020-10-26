@@ -3,5 +3,8 @@
     "pretest": "npm run compile",
     "prepublish": "npm run compile",
     "compile": "coffee --compile --output app/ app/"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.12.7"
   }
 }
