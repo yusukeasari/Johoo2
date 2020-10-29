@@ -385,8 +385,8 @@ class QuickSearchPanel extends Backbone.View
         $(@resultel).css
           'height':'0px'
 
-    $(@resultel).on 'change',=>
-      if $(@).is(':checked')
+#    $(@resultel).on 'change',=>
+#      if $(@).is(':checked')
     $(@cancelbutton).on 'click',@textCancel
     $(@textform).on 'keydown keyup',@textChanged
 
