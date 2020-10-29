@@ -5,7 +5,6 @@ DOMAIN = ''
 bgImageApi = ''
 APP_FILE = ''
 
-
 pmviewer = "";
 
 cache = ''
