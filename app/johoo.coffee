@@ -53,7 +53,7 @@ class PhotomosaicViewer extends Backbone.View
 
   initialize:=>
     #環境設定とか
-    jQuery.support.cors = true;
+    jQuery.support.cors = true
     @uniBrowse = new Browser
 
     minZoom = initialZoomSizeArr[Browser.device]
@@ -159,6 +159,39 @@ class PhotomosaicViewer extends Backbone.View
 
     #拡大表示クラス
     @popup = new Popup
+    deferred = @popup.load()
+    deferred.done ()=>
+      @pyramid.on 'openPopupFromPoint',(_p) =>
+
+        $.getJSON searchApi,{'n':_p},(data,status)=>
+          #タップ拡大時に特殊なフラグによって条件分岐するならココ
+          if status and data isnt null
+            if data[0].id isnt undefined
+              p = data[0].num
+              @router.navigate "mosaic/n/#{p}/",
+                trigger: true
+
+        .fail ->
+          console.log 'error:'+status
+      ###
+      # Router振り分け
+      ###
+      @router = new Backbone.Router
+      @router.route "mosaic/id/:id/", (_id)=> @openPopupFromId(_id)
+      @router.route "mosaic/n/:n/", (_n)=>
+        @popup.openPopupFromPoint(_n)
+        @marker.setResult _n
+        @marker.render()
+      @router.route "timeline/:id/", (_id)=> @openPopupFromTimeline(_id)
+      @router.route "quicksearch/:id/", (_id)=> @openPopupFromQuickSearch(_id)
+      @router.route "search/", (_p)=> @showSearchPanel()
+      @router.route "", => @backtomain()
+
+      Backbone.history.start()
+      $('#loading').animate({opacity:0},500,'easeOutQuart',=>
+        $('#loading').hide()
+      )
+
 
     @quickSearchPanel = new QuickSearchPanel
 
@@ -200,19 +233,6 @@ class PhotomosaicViewer extends Backbone.View
         trigger: true
     @popup.on 'getCenterNum',(_num) =>
       @moveToCenterFromNum(_num)
-
-    @pyramid.on 'openPopupFromPoint',(_p) =>
-
-      $.getJSON searchApi,{'n':_p},(data,status)=>
-        #タップ拡大時に特殊なフラグによって条件分岐するならココ
-        if status and data isnt null
-          if data[0].id isnt undefined
-            p = data[0].num
-            @router.navigate "mosaic/n/#{p}/",
-              trigger: true
-
-      .fail ->
-        console.log 'error:'+status
 
     #検索パネル表示イベント
     @controlPanel.on 'showSearchPanel', =>
@@ -260,24 +280,6 @@ class PhotomosaicViewer extends Backbone.View
     @onOrient()
     @controlPanel.trigger 'onclickhomebutton'
 
-    ###
-    # Router振り分け
-    ###
-    @router = new Backbone.Router
-    @router.route "mosaic/id/:id/", (_id)=> @openPopupFromId(_id)
-    @router.route "mosaic/n/:n/", (_n)=>
-      @popup.openPopupFromPoint(_n)
-      @marker.setResult _n
-      @marker.render()
-    @router.route "timeline/:id/", (_id)=> @openPopupFromTimeline(_id)
-    @router.route "quicksearch/:id/", (_id)=> @openPopupFromQuickSearch(_id)
-    @router.route "search/", (_p)=> @showSearchPanel()
-    @router.route "", => @backtomain()
-
-    Backbone.history.start()
-    $('#loading').animate({opacity:0},500,'easeOutQuart',=>
-      $('#loading').hide()
-    )
 class SmallMap extends Backbone.View
   el: ''
   cursor: '#smallMapCursor'
@@ -582,7 +584,7 @@ class QuickSearchPanel extends Backbone.View
             .attr('class','searchResultItemImage')
           textarea = $('<div >').attr('class','searchResultItemText')
           textarea.css(width: '120px',wordBreak: 'break-all')
-          textarea.html(_img.b4)
+          textarea.html(_img.b1)
           l = if @loadMore? or @loadPrev? then 33 else 0
           m = if _list.length < @max then _list.length else @max
           wrapper = $('<div >').attr('id','searchResultItem'+@i).attr('class','searchResultItem').animate({opacity:0,marginLeft:"+=50px"},0)
@@ -1539,7 +1541,7 @@ class Pyramid extends Backbone.View
   moveToNum:(d)=>
     if d%motifWidth is 0
       tx = motifWidth*arrZoomSizeX[nowZoom]*-1
-      ty = Math.floor((d/motifWidth)-1)*arrZoomSizeX[nowZoom]*-1
+      ty = Math.floor((d/motifWidth)-1)*arrZoomSizeY[nowZoom]*-1
     else
       tx = d%motifWidth*arrZoomSizeX[nowZoom]*-1
       ty = Math.floor(d/motifWidth)*arrZoomSizeY[nowZoom]*-1
@@ -1576,7 +1578,7 @@ class Pyramid extends Backbone.View
 #      top:(Browser.height/2)+ty-arrZoomSizeY[nowZoom]/2
     $(@el).animate({
       left:(Browser.width/2)+tx+arrZoomSizeX[nowZoom]/2
-      top:(Browser.height/6)+ty-arrZoomSizeY[nowZoom]/2
+      top:(Browser.height/2)+ty-arrZoomSizeY[nowZoom]/2
       width:zoomSize[nowZoom][0]
       height:zoomSize[nowZoom][1]
     },200)
@@ -1588,14 +1590,10 @@ class Pyramid extends Backbone.View
 
   moveToPinchZoomPos:=>
     if @dragStartTop isnt undefined and @dragStartLeft isnt undefined
-#      $(@el).css
-#        left:@dragStartLeft-((@dragStartX-@dragStartLeft)*(Math.pow(2,nowZoom-prevZoom)-1))
-#        top:@dragStartTop-((@dragStartY-@dragStartTop)*(Math.pow(2,nowZoom-prevZoom)-1))
       pos = [
         @dragStartLeft-((@dragStartX-@dragStartLeft)*(Math.pow(2,nowZoom-prevZoom)-1)),
         @dragStartTop-((@dragStartY-@dragStartTop)*(Math.pow(2,nowZoom-prevZoom)-1))
       ]
-#      @trigger 'moving',[$(@el).position().left,$(@el).position().top]
 
   moveToZoomInPos:=>
     pyramidPos = @convertToGrobalCenterPos $(@el).position().left,$(@el).position().top
@@ -2503,16 +2501,23 @@ class ImageViewer extends Backbone.View
 class Popup extends Backbone.View
   el: '#Popup'
 
-  initialize:=>
+  load:=>
+    console.log "s load"
+    deferred = new $.Deferred()
     $.ajax '/assets/html/popup.html',
       datatype: 'html'
-    .then @popupHtmlLoaded
+    .then (data,status)=>
+      if status isnt 'success'
+        console.log("popup html cannot load.")
+      else
+        deferred.resolve()
+        @html = data
+        @popupHtmlLoaded(data)
+      
+      return deferred
 
-  popupHtmlLoaded:(data,status)=>
-    if status isnt 'success'
-      console.log "ERROR:Popuphtmlが読み込めません"
-    else
-      $(@el).html(data)
+  popupHtmlLoaded:(data)=>
+    $(@el).html(data)
     @base = $('#snsPost').html()
     @imageviewer = new ImageViewer
     @imageviewer.on("loadnext",@loadnext)
