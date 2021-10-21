@@ -23,3 +23,6 @@ jobs:
           npm run compile
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: ./app
