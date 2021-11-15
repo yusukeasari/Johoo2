@@ -161,6 +161,28 @@ class PhotomosaicViewer extends Backbone.View
     @popup = new Popup
     deferred = @popup.load()
     deferred.done ()=>
+      ###
+      # Router振り分け
+      ###
+      @router = new Backbone.Router
+      @router.route "mosaic/id/:id/", (_id)=> @openPopupFromId(_id)
+      @router.route "mosaic/n/:n/", (_n)=>
+        nowZoom = arrZoomSizeX.length-2
+        prevZoom = arrZoomSizeX.length-3
+
+        @pyramid.moveToNumTop _n
+        @marker.setResult _n
+        @marker.render()
+        @popup.openPopupFromPoint(_n)
+      @router.route "timeline/:id/", (_id)=> @openPopupFromTimeline(_id)
+      @router.route "quicksearch/:id/", (_id)=> @openPopupFromQuickSearch(_id)
+      @router.route "search/", (_p)=> @showSearchPanel()
+      @router.route "", => @backtomain()
+
+      Backbone.history.start()
+      $('#loading').animate({opacity:0},500,'easeOutQuart',=>
+        $('#loading').hide()
+      )
       @pyramid.on 'openPopupFromPoint',(_p) =>
 
         $.getJSON searchApi,{'n':_p},(data,status)=>
@@ -173,24 +195,6 @@ class PhotomosaicViewer extends Backbone.View
 
         .fail ->
           console.log 'error:'+status
-      ###
-      # Router振り分け
-      ###
-      @router = new Backbone.Router
-      @router.route "mosaic/id/:id/", (_id)=> @openPopupFromId(_id)
-      @router.route "mosaic/n/:n/", (_n)=>
-        @popup.openPopupFromPoint(_n)
-        @marker.setResult _n
-        @marker.render()
-      @router.route "timeline/:id/", (_id)=> @openPopupFromTimeline(_id)
-      @router.route "quicksearch/:id/", (_id)=> @openPopupFromQuickSearch(_id)
-      @router.route "search/", (_p)=> @showSearchPanel()
-      @router.route "", => @backtomain()
-
-      Backbone.history.start()
-      $('#loading').animate({opacity:0},500,'easeOutQuart',=>
-        $('#loading').hide()
-      )
 
 
     @quickSearchPanel = new QuickSearchPanel
@@ -266,6 +270,8 @@ class PhotomosaicViewer extends Backbone.View
       @pyramid.update 'home'
 
     @controlPanel.on 'onclickformbutton', =>
+      $.fancybox.close()
+
       $.fancybox.open
         type: 'iframe'
         src: 'http://test.pitcom.jp/form/?page=input'
@@ -584,7 +590,7 @@ class QuickSearchPanel extends Backbone.View
             .attr('class','searchResultItemImage')
           textarea = $('<div >').attr('class','searchResultItemText')
           textarea.css(width: '120px',wordBreak: 'break-all')
-          textarea.html(_img.b1)
+          textarea.html(_img.b4)
           l = if @loadMore? or @loadPrev? then 33 else 0
           m = if _list.length < @max then _list.length else @max
           wrapper = $('<div >').attr('id','searchResultItem'+@i).attr('class','searchResultItem').animate({opacity:0,marginLeft:"+=50px"},0)
@@ -865,6 +871,7 @@ class SearchPanel extends Backbone.View
   show:=>
     if $('#searchSubmitButton')[0] isnt undefined
       @clear()
+      $.fancybox.close()
       $.fancybox.open
         src: @el
         type: 'inline'
@@ -960,7 +967,7 @@ class TimelineChildView extends Backbone.View
       attr('class','tlOutline')
     $('<div>').
       attr('class','tlTitle').
-      html(item.b1).
+      html(item.b4).
       appendTo inner
     $('<div>').
       attr('class','tlMsg').
@@ -2651,7 +2658,7 @@ class Popup extends Backbone.View
   show:=>
     $(@el).show()
 
-#    Shadow.show()
+    $.fancybox.close()
     $.fancybox.open
       src : '#Popup'
       type : 'inline'
